@@ -16,6 +16,7 @@ mod options;
 
 use log::debug;
 use options::Options;
+use rustc_driver::RunCompiler;
 use rustc_session::config::ErrorOutputType;
 use rustc_session::EarlyDiagCtxt;
 
@@ -86,7 +87,9 @@ fn main() {
 
         let mut callbacks = callbacks::LockBudCallbacks::new(options);
         debug!("rustc_command_line_arguments {rustc_command_line_arguments:?}");
-        rustc_driver::run_compiler(&rustc_command_line_arguments, &mut callbacks);
+        
+        let run_comp = RunCompiler::new(&rustc_command_line_arguments, &mut callbacks);
+        run_comp.run();
         Ok(())
     });
     std::process::exit(exit_code);

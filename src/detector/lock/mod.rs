@@ -30,7 +30,7 @@ use std::collections::VecDeque;
 use self::report::{CondvarDeadlockDiagnosis, WaitNotifyLocks};
 
 #[derive(Clone, Debug, Default)]
-struct LiveLockGuards(FxHashSet<LockGuardId>);
+pub struct LiveLockGuards(pub FxHashSet<LockGuardId>);
 
 impl LiveLockGuards {
     fn insert(&mut self, lockguard_id: LockGuardId) -> bool {
@@ -73,7 +73,7 @@ impl<'tcx> DeadlockDetector<'tcx> {
         }
     }
 
-    fn collect_lockguards(
+    pub fn collect_lockguards(
         &self,
         callgraph: &CallGraph<'tcx>,
     ) -> FxHashMap<InstanceId, LockGuardMap<'tcx>> {
@@ -100,7 +100,7 @@ impl<'tcx> DeadlockDetector<'tcx> {
 
     /// Collect condvar APIs.
     /// Return the condvar API's InstanceId and kind.
-    fn collect_condvars(&self, callgraph: &CallGraph<'tcx>) -> FxHashMap<InstanceId, CondvarApi> {
+    pub fn collect_condvars(&self, callgraph: &CallGraph<'tcx>) -> FxHashMap<InstanceId, CondvarApi> {
         callgraph
             .graph
             .node_references()
@@ -229,7 +229,7 @@ impl<'tcx> DeadlockDetector<'tcx> {
     /// Condvar example code. In fact, it is correct as long as there is a LockGuard aliasing with
     /// the MutexGuard in `wait` that dominates `notify`.
     /// TODO(boqin): check if an aliased MutexGuard dominates `notify` instead.
-    fn detect_condvar_misuse<'a>(
+    pub fn detect_condvar_misuse<'a>(
         &self,
         lockguards_before_condvar_apis: &FxHashMap<InstanceId, LockGuardsBeforeCallSites>,
         condvar_apis: &FxHashMap<InstanceId, CondvarApi>,
@@ -486,7 +486,7 @@ impl<'tcx> DeadlockDetector<'tcx> {
     }
 
     /// Collect gen/kill info for related locations.
-    fn gen_kill_locations(
+    pub fn gen_kill_locations(
         lockguard_map: &LockGuardMap<'tcx>,
     ) -> (
         FxHashMap<Location, LiveLockGuards>,
@@ -507,7 +507,7 @@ impl<'tcx> DeadlockDetector<'tcx> {
 
     /// state' = state \ kill U gen
     /// return lockguard relation(a, b) where a is still live when b becomes live.
-    fn apply_gen_kill(
+    pub fn apply_gen_kill(
         state: &mut LiveLockGuards,
         gen: Option<&LiveLockGuards>,
         kill: Option<&LiveLockGuards>,
@@ -529,7 +529,7 @@ impl<'tcx> DeadlockDetector<'tcx> {
     }
 
     /// Apply Gen/Kill to get live lockguards for each location in the same fn.
-    fn intraproc_gen_kill(
+    pub fn intraproc_gen_kill(
         &mut self,
         body: &'tcx Body<'tcx>,
         context: &LiveLockGuards,

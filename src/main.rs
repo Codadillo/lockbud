@@ -87,7 +87,7 @@ fn main() {
 
         let mut callbacks = callbacks::LockBudCallbacks::new(options);
         debug!("rustc_command_line_arguments {rustc_command_line_arguments:?}");
-        
+
         let run_comp = RunCompiler::new(&rustc_command_line_arguments, &mut callbacks);
         run_comp.run();
         Ok(())

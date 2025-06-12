@@ -100,7 +100,10 @@ impl<'tcx> DeadlockDetector<'tcx> {
 
     /// Collect condvar APIs.
     /// Return the condvar API's InstanceId and kind.
-    pub fn collect_condvars(&self, callgraph: &CallGraph<'tcx>) -> FxHashMap<InstanceId, CondvarApi> {
+    pub fn collect_condvars(
+        &self,
+        callgraph: &CallGraph<'tcx>,
+    ) -> FxHashMap<InstanceId, CondvarApi> {
         callgraph
             .graph
             .node_references()

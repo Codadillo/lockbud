@@ -1,6 +1,5 @@
 //! DeadlockDetector: detects doublelock and conflictlock.
 extern crate rustc_data_structures;
-extern crate rustc_hash;
 extern crate rustc_span;
 
 pub mod report;
@@ -21,7 +20,7 @@ use petgraph::graph::NodeIndex;
 use petgraph::visit::{depth_first_search, Control, DfsEvent, EdgeRef, IntoNodeReferences};
 use petgraph::{Directed, Direction, Graph};
 
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_data_structures::fx::{FxHashMap, FxHashSet};
 use rustc_middle::mir::{Body, Location, Operand, TerminatorKind};
 use rustc_middle::ty::{TyCtxt, TypingEnv};
 

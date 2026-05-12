@@ -12,7 +12,7 @@ use log::{debug, warn};
 use rustc_driver::Compilation;
 use rustc_hir::def_id::LOCAL_CRATE;
 use rustc_interface::interface;
-use rustc_middle::mir::mono::MonoItem;
+use rustc_middle::mono::MonoItem;
 use rustc_middle::ty::{Instance, TyCtxt, TypingEnv};
 
 use crate::analysis::callgraph::CallGraph;
@@ -44,9 +44,9 @@ impl rustc_driver::Callbacks for LockBudCallbacks {
     fn config(&mut self, config: &mut rustc_interface::interface::Config) {
         self.file_name = config
             .input
-            .source_name()
-            .prefer_remapped_unconditionaly()
-            .to_string();
+            .opt_path()
+            .map(|path| path.to_string_lossy().into_owned())
+            .unwrap_or_else(|| config.input.filestem().to_owned());
         debug!("Processing input file: {}", self.file_name);
         if config.opts.test {
             debug!("in test only mode");
@@ -100,7 +100,7 @@ impl LockBudCallbacks {
         if tcx.sess.opts.unstable_opts.no_codegen || !tcx.sess.opts.output_types.should_codegen() {
             return;
         }
-        let cgus = tcx.collect_and_partition_mono_items(()).1;
+        let cgus = tcx.collect_and_partition_mono_items(()).codegen_units;
         let instances: Vec<Instance<'tcx>> = cgus
             .iter()
             .flat_map(|cgu| {

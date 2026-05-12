@@ -6,14 +6,14 @@
 //! with limited support for inter-procedural analysis
 //! of methods and closures.
 //! See `Andersen` for more details.
-extern crate rustc_hash;
+extern crate rustc_data_structures;
 extern crate rustc_hir;
 extern crate rustc_index;
 
 use std::cmp::{Ordering, PartialOrd};
 use std::collections::VecDeque;
 
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_data_structures::fx::{FxHashMap, FxHashSet};
 use rustc_hir::def_id::DefId;
 use rustc_middle::mir::visit::Visitor;
 use rustc_middle::mir::{
@@ -502,6 +502,7 @@ impl<'a, 'tcx> ConstraintGraphCollector<'a, 'tcx> {
                 user_ty: _,
                 const_,
             }) => Some(AccessPattern::Constant(*const_)),
+            Operand::RuntimeChecks(_) => None,
         }
     }
 
@@ -581,7 +582,6 @@ impl<'tcx> Visitor<'tcx> for ConstraintGraphCollector<'_, 'tcx> {
             }
             StatementKind::FakeRead(_)
             | StatementKind::SetDiscriminant { .. }
-            | StatementKind::Deinit(_)
             | StatementKind::StorageLive(_)
             | StatementKind::StorageDead(_)
             | StatementKind::Retag(_, _)
@@ -901,12 +901,12 @@ impl<'a, 'tcx> AliasAnalysis<'a, 'tcx> {
         // 2. if exists p: pts(pointer) contains Place(p) and pts(pointee) contains Alloc(p) then possibly alias
         if pointer_pts.iter().any(|n1| {
             let p = match n1 {
-                ConstraintNode::Place(p) => *p,
+                ConstraintNode::Place(p) => p,
                 _ => return false,
             };
             pointee_pts
                 .iter()
-                .any(|n2| matches!(n2, ConstraintNode::Alloc(p2) if *p2 == p))
+                .any(|n2| matches!(n2, ConstraintNode::Alloc(p2) if p2 == p))
         }) {
             Some(ApproximateAliasKind::Possibly)
         } else {
@@ -1100,11 +1100,11 @@ fn point_to_same_type_param<'tcx>(
     body2: &Body<'tcx>,
 ) -> bool {
     let mut parameter_places1 = pts1.iter().filter_map(|node| match node {
-        ConstraintNode::Alloc(place) if is_parameter(place.local, body1) => Some(*place),
+        ConstraintNode::Alloc(place) if is_parameter(place.local, body1) => Some(place),
         _ => None,
     });
     let mut parameter_places2 = pts2.iter().filter_map(|node| match node {
-        ConstraintNode::Alloc(place) if is_parameter(place.local, body2) => Some(*place),
+        ConstraintNode::Alloc(place) if is_parameter(place.local, body2) => Some(place),
         _ => None,
     });
     parameter_places1.any(|place1| {
